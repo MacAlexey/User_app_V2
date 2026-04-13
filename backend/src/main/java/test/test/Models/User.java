@@ -24,7 +24,10 @@ public class User {
     private Long id;
 
     private String name;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
     private String password;
 
     @ManyToMany
@@ -36,5 +39,5 @@ public class User {
     private Set<Roles> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "owner")
-    private List<ToDo> todos = new ArrayList<>();
+    private List<Todo> todos = new ArrayList<>();
 }

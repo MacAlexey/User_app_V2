@@ -8,7 +8,7 @@ import test.test.DTO.Todo.UpdateTodoRequest;
 import test.test.Exceptions.TodoNotFoundException;
 import test.test.Exceptions.UserNotFoundException;
 import test.test.Mappers.TodoMapper;
-import test.test.Models.ToDo;
+import test.test.Models.Todo;
 import test.test.Models.User;
 import test.test.Repositories.TodoRepository;
 import test.test.Repositories.UserRepository;
@@ -36,19 +36,19 @@ public class TodoService {
 
     public TodoResponse createTodo(Long userId, CreateTodoRequest request) {
         User owner = ensureUserExists(userId);
-        ToDo todo = todoMapper.toEntity(request);
+        Todo todo = todoMapper.toEntity(request);
         todo.setOwner(owner);
         return todoMapper.toResponse(todoRepository.save(todo));
     }
 
     public TodoResponse updateTodo(Long userId, Long todoId, UpdateTodoRequest request) {
-        ToDo todo = findOwnedTodo(userId, todoId);
+        Todo todo = findOwnedTodo(userId, todoId);
         todoMapper.updateEntity(todo, request);
         return todoMapper.toResponse(todoRepository.save(todo));
     }
 
     public void deleteTodo(Long userId, Long todoId) {
-        ToDo todo = findOwnedTodo(userId, todoId);
+        Todo todo = findOwnedTodo(userId, todoId);
         todoRepository.delete(todo);
     }
 
@@ -57,7 +57,7 @@ public class TodoService {
                 .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
-    private ToDo findOwnedTodo(Long userId, Long todoId) {
+    private Todo findOwnedTodo(Long userId, Long todoId) {
         ensureUserExists(userId);
         return todoRepository.findByIdAndOwnerId(todoId, userId)
                 .orElseThrow(() -> new TodoNotFoundException(userId, todoId));

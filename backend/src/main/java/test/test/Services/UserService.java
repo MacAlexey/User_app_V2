@@ -14,6 +14,7 @@ import test.test.DTO.User.UpdateUserRequest;
 import test.test.DTO.User.UserResponse;
 import test.test.DTO.User.LoginRequest;
 import test.test.DTO.User.LoginResponse;
+import test.test.Exceptions.EmailAlreadyExistsException;
 import test.test.Exceptions.UserNotFoundException;
 import test.test.Mappers.UserMapper;
 import test.test.Models.Roles;
@@ -36,6 +37,9 @@ public class UserService {
     private final JwtService jwtService;
 
     public UserResponse createUser(CreateUserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException(request.getEmail());
+        }
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         Set<Roles> defaultRoles = new HashSet<>();

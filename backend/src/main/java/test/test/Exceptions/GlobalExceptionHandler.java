@@ -1,6 +1,7 @@
 package test.test.Exceptions;
 
 import jakarta.validation.ConstraintViolationException;
+import test.test.Exceptions.EmailAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleUserNotFound(UserNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildApiErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage()));
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(buildApiErrorResponse(HttpStatus.CONFLICT, exception.getMessage()));
     }
 
     @ExceptionHandler(TodoNotFoundException.class)
