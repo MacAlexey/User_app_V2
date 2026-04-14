@@ -21,12 +21,14 @@ import test.test.Models.Roles;
 import test.test.Models.User;
 import test.test.Repositories.UserRepository;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor   // генерирует конструктор для final полей
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
@@ -35,7 +37,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
+    @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException(request.getEmail());
@@ -55,46 +59,59 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserById(Long id) {
-        return userMapper.toResponse(findUserById(id));
+        return userMapper.toResponse(findUserEntityById(id));
     }
 
+    @Transactional
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
-        User user = findUserById(id);
+        User user = findUserEntityById(id);
+        boolean emailChanged = !user.getEmail().equals(request.getEmail());
+        if (emailChanged && userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException(request.getEmail());
+        }
         userMapper.updateEntity(user, request);
-        return userMapper.toResponse(userRepository.save(user));
+        UserResponse response = userMapper.toResponse(userRepository.save(user));
+        if (emailChanged) {
+            refreshTokenService.deleteByUser(user);
+        }
+        return response;
     }
 
+    @Transactional
     public UserResponse assignRoles(Long id, AssignRolesRequest request) {
-        User user = findUserById(id);
+        User user = findUserEntityById(id);
         user.setRoles(roleService.assignRolesToUser(id, request.getRoles()));
         return userMapper.toResponse(userRepository.save(user));
     }
 
+    @Transactional
     public void deleteUser(Long id) {
-        userRepository.delete(findUserById(id));
+        userRepository.delete(findUserEntityById(id));
     }
 
-    private User findUserById(Long id) {
+    @Transactional(readOnly = true)
+    public User findUserEntityById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 
-    public Authentication authenticateUser(String username, String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
-        return authentication;
-    }
-
+    @Transactional
     public LoginResponse login(LoginRequest request) {
-        Authentication authentication = authenticateUser(request.getEmail(), request.getPassword());
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtService.generateToken(userDetails);
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
-        return new LoginResponse(token, "Bearer", user.getId(), user.getEmail(), user.getName());
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("userId", user.getId());
+        String accessToken = jwtService.generateToken(extraClaims, userDetails);
+        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
+        return new LoginResponse(accessToken, refreshToken, "Bearer", user.getId(), user.getEmail(), user.getName());
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
