@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import test.test.DTO.Todo.CreateTodoRequest;
 import test.test.DTO.Todo.TodoResponse;
 import test.test.DTO.Todo.UpdateTodoRequest;
@@ -12,10 +13,10 @@ import test.test.Services.TodoService;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/v1/{userId}/todos")
 @RequiredArgsConstructor
+@PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
 public class TodoController {
 
     private final TodoService todoService;

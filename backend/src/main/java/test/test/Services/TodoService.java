@@ -2,6 +2,7 @@ package test.test.Services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import test.test.DTO.Todo.CreateTodoRequest;
 import test.test.DTO.Todo.TodoResponse;
 import test.test.DTO.Todo.UpdateTodoRequest;
@@ -23,6 +24,7 @@ public class TodoService {
     private final UserRepository userRepository;
     private final TodoMapper todoMapper;
 
+    @Transactional(readOnly = true)
     public List<TodoResponse> getTodosByUser(Long userId) {
         ensureUserExists(userId);
         return todoRepository.findByOwnerId(userId).stream()
@@ -30,10 +32,12 @@ public class TodoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public TodoResponse getTodoByUser(Long userId, Long todoId) {
         return todoMapper.toResponse(findOwnedTodo(userId, todoId));
     }
 
+    @Transactional
     public TodoResponse createTodo(Long userId, CreateTodoRequest request) {
         User owner = ensureUserExists(userId);
         Todo todo = todoMapper.toEntity(request);
@@ -41,12 +45,14 @@ public class TodoService {
         return todoMapper.toResponse(todoRepository.save(todo));
     }
 
+    @Transactional
     public TodoResponse updateTodo(Long userId, Long todoId, UpdateTodoRequest request) {
         Todo todo = findOwnedTodo(userId, todoId);
         todoMapper.updateEntity(todo, request);
         return todoMapper.toResponse(todoRepository.save(todo));
     }
 
+    @Transactional
     public void deleteTodo(Long userId, Long todoId) {
         Todo todo = findOwnedTodo(userId, todoId);
         todoRepository.delete(todo);
