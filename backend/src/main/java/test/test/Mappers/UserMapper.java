@@ -2,7 +2,6 @@ package test.test.Mappers;
 
 import org.springframework.stereotype.Component;
 import test.test.DTO.User.CreateUserRequest;
-import test.test.DTO.User.UpdateUserRequest;
 import test.test.DTO.User.UserResponse;
 import test.test.Models.Roles;
 import test.test.Models.User;
@@ -19,11 +18,6 @@ public class UserMapper {
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
         return user;
-    }
-
-    public void updateEntity(User user, UpdateUserRequest request) {
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
     }
 
     public UserResponse toResponse(User user) {

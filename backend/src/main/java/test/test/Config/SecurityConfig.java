@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,6 +25,7 @@ import test.test.Services.CustomUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -40,6 +42,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll() //после поставить только для роли которые могут обновлять токены
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").permitAll() //после поставить только для роли которые могут удалять пользователей
                         .requestMatchers(HttpMethod.GET, "/api/v1/users", "/api/v1/users/**").permitAll() //после поставить только для роли которые могут просматривать пользователей
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/email").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/users/*/name").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

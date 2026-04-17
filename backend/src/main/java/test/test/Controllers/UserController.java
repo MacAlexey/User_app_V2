@@ -3,9 +3,11 @@ package test.test.Controllers;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import test.test.DTO.User.AssignRolesRequest;
-import test.test.DTO.User.UpdateUserRequest;
+import test.test.DTO.User.UpdateEmailRequest;
+import test.test.DTO.User.UpdateNameRequest;
 import test.test.DTO.User.UserResponse;
 import test.test.Services.UserService;
 
@@ -28,9 +30,16 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
-        return ResponseEntity.ok(userService.updateUser(id, request));
+    @PreAuthorize("#id == authentication.principal.id or hasRole('ADMIN')")
+    @PatchMapping("/{id}/email")
+    public ResponseEntity<UserResponse> updateEmail(@PathVariable Long id, @Valid @RequestBody UpdateEmailRequest request) {
+        return ResponseEntity.ok(userService.updateEmail(id, request));
+    }
+
+    @PreAuthorize("#id == authentication.principal.id or hasRole('ADMIN')")
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<UserResponse> updateName(@PathVariable Long id, @Valid @RequestBody UpdateNameRequest request) {
+        return ResponseEntity.ok(userService.updateName(id, request));
     }
 
     @PutMapping("/{id}/roles")

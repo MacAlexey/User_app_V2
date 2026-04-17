@@ -10,7 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import test.test.DTO.User.CreateUserRequest;
 import test.test.DTO.User.AssignRolesRequest;
-import test.test.DTO.User.UpdateUserRequest;
+import test.test.DTO.User.UpdateEmailRequest;
+import test.test.DTO.User.UpdateNameRequest;
 import test.test.DTO.User.UserResponse;
 import test.test.DTO.User.LoginRequest;
 import test.test.DTO.User.LoginResponse;
@@ -65,18 +66,22 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(Long id, UpdateUserRequest request) {
+    public UserResponse updateEmail(Long id, UpdateEmailRequest request) {
         User user = findUserEntityById(id);
-        boolean emailChanged = !user.getEmail().equals(request.getEmail());
-        if (emailChanged && userRepository.existsByEmail(request.getEmail())) {
+        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException(request.getEmail());
         }
-        userMapper.updateEntity(user, request);
+        user.setEmail(request.getEmail());
         UserResponse response = userMapper.toResponse(userRepository.save(user));
-        if (emailChanged) {
-            refreshTokenService.deleteByUser(user);
-        }
+        refreshTokenService.deleteByUser(user);
         return response;
+    }
+
+    @Transactional
+    public UserResponse updateName(Long id, UpdateNameRequest request) {
+        User user = findUserEntityById(id);
+        user.setName(request.getName());
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     @Transactional
