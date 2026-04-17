@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import test.test.DTO.User.AssignRolesRequest;
 import test.test.DTO.User.UpdateEmailRequest;
 import test.test.DTO.User.UpdateNameRequest;
+import test.test.DTO.User.UpdatePasswordRequest;
 import test.test.DTO.User.UserResponse;
 import test.test.Services.UserService;
 
@@ -40,6 +41,13 @@ public class UserController {
     @PatchMapping("/{id}/name")
     public ResponseEntity<UserResponse> updateName(@PathVariable Long id, @Valid @RequestBody UpdateNameRequest request) {
         return ResponseEntity.ok(userService.updateName(id, request));
+    }
+
+    @PreAuthorize("#id == authentication.principal.id")
+    @PatchMapping("/{id}/password")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @Valid @RequestBody UpdatePasswordRequest request) {
+        userService.updatePassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/roles")

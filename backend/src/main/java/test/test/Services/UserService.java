@@ -12,9 +12,11 @@ import test.test.DTO.User.CreateUserRequest;
 import test.test.DTO.User.AssignRolesRequest;
 import test.test.DTO.User.UpdateEmailRequest;
 import test.test.DTO.User.UpdateNameRequest;
+import test.test.DTO.User.UpdatePasswordRequest;
 import test.test.DTO.User.UserResponse;
 import test.test.DTO.User.LoginRequest;
 import test.test.DTO.User.LoginResponse;
+import org.springframework.security.authentication.BadCredentialsException;
 import test.test.Exceptions.EmailAlreadyExistsException;
 import test.test.Exceptions.UserNotFoundException;
 import test.test.Mappers.UserMapper;
@@ -75,6 +77,17 @@ public class UserService {
         UserResponse response = userMapper.toResponse(userRepository.save(user));
         refreshTokenService.deleteByUser(user);
         return response;
+    }
+
+    @Transactional
+    public void updatePassword(Long id, UpdatePasswordRequest request) {
+        User user = findUserEntityById(id);
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        refreshTokenService.deleteByUser(user);
     }
 
     @Transactional
