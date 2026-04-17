@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import test.test.Exceptions.ApiErrorResponse;
 import test.test.DTO.Auth.RefreshTokenRequest;
 import test.test.DTO.Auth.RefreshTokenResponse;
 import test.test.DTO.User.CreateUserRequest;
@@ -52,8 +53,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request) {
-        String token = request.getHeader("Authorization").substring(7);
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiErrorResponse.of(401, "Unauthorized", "Missing or invalid Authorization header"));
+        }
         Long userId = jwtService.extractUserId(token);
         User user = userService.findUserEntityById(userId);
         refreshTokenService.deleteByUser(user);
@@ -61,9 +66,19 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(HttpServletRequest request) {
-        String token = request.getHeader("Authorization").substring(7);
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+        String token = extractToken(request);
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiErrorResponse.of(401, "Unauthorized", "Missing or invalid Authorization header"));
+        }
         Long userId = jwtService.extractUserId(token);
         return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        return authHeader.substring(7);
     }
 }

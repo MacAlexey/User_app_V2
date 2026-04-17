@@ -93,7 +93,9 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
-        userRepository.delete(findUserEntityById(id));
+        User user = findUserEntityById(id);
+        refreshTokenService.deleteByUser(user);
+        userRepository.delete(user);
     }
 
     @Transactional(readOnly = true)
